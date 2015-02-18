@@ -1,0 +1,7 @@
+C:\code\ai\JSONxWeb\JSONxWeb.Test\bin\Debug\JSONxWeb.Test.dll
+C:\code\ai\JSONxWeb\JSONxWeb.Test\bin\Debug\JSONxWeb.Test.pdb
+C:\code\ai\JSONxWeb\JSONxWeb.Test\bin\Debug\Newtonsoft.Json.dll
+C:\code\ai\JSONxWeb\JSONxWeb.Test\bin\Debug\Newtonsoft.Json.xml
+C:\code\ai\JSONxWeb\JSONxWeb.Test\obj\Debug\JSONxWeb.Test.csprojResolveAssemblyReference.cache
+C:\code\ai\JSONxWeb\JSONxWeb.Test\obj\Debug\JSONxWeb.Test.dll
+C:\code\ai\JSONxWeb\JSONxWeb.Test\obj\Debug\JSONxWeb.Test.pdb

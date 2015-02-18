@@ -1,0 +1,120 @@
+﻿<?php
+
+require_once('config.php');
+
+/*
+ * Xweb interface functions
+ * This can be merged into a future class as needed
+ */
+
+function guidv4()
+{
+    $data = openssl_random_pseudo_bytes(16);
+
+    $data[6] = chr(ord($data[6]) & 0x0f | 0x40); // set version to 0010
+    $data[8] = chr(ord($data[8]) & 0x3f | 0x80); // set bits 6-7 to 10
+
+    return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+}
+
+/*
+ * Presumes config.php has been included
+ */
+function xWebAuthenticate()
+{
+    $postData = array(
+        'userName' => $GLOBALS["netforum_xweb_user"],
+        'password' => $GLOBALS["netforum_xweb_pass"]
+    );
+
+    $ch = curl_init($GLOBALS["netforum_xweb_url"] . "/Authenticate");
+    curl_setopt_array($ch, array(
+        CURLOPT_POST => TRUE,
+        CURLOPT_RETURNTRANSFER => TRUE,
+        CURLOPT_HTTPHEADER => array(
+            "Content-Type: application/json"
+        ),
+        CURLOPT_POSTFIELDS => json_encode($postData)
+    ));
+
+    $response = curl_exec($ch);
+    $responseData = json_decode($response, TRUE);
+
+    $GLOBALS["netforum_xweb_token"] = $responseData["token"];
+
+}
+
+/*
+ * Login to xWeb for a customer
+ * Response: Array ( [token] => d95a31d1-e538-4a29-be6f-bd0586ce036c [result] => Array ( [IXmlSerializable] => Array ( [CurrentKey] => f04fe516-660a-425c-a076-bfe047a346ad [Individual] => Array ( [ind_cst_key] => f04fe516-660a-425c-a076-bfe047a346ad [ind_first_name] => Jon [ind_last_name] => Shoberg [ind_full_name_cp] => Jon Shoberg [ind_token] => e5c515e9-8538-42cb-87e2-3f9bc3cbc4c0 ) [Customer] => Array ( [cst_recno] => 1138533 ) [Email] => Array ( [eml_address] => jon@shoberg.net ) [Business_Address] => Array ( [adr_city] => Columbus [adr_state] => OH [adr_post_code] => 43240 [adr_country] => UNITED STATES ) ) ) )
+ */
+function xWebCustomerLogin($username, $password)
+{
+    xWebAuthenticate();
+
+    $postData = array(
+        'token' => $GLOBALS["netforum_xweb_token"],
+        'LoginOrEmail' => $username,
+        'password' => $password
+    );
+
+    $ch = curl_init($GLOBALS["netforum_xweb_url"] . "/WEBWebUserLogin");
+    curl_setopt_array($ch, array(
+        CURLOPT_POST => TRUE,
+        CURLOPT_RETURNTRANSFER => TRUE,
+        CURLOPT_HTTPHEADER => array(
+            "Content-Type: application/json"
+        ),
+        CURLOPT_POSTFIELDS => json_encode($postData)
+    ));
+
+    $response = curl_exec($ch);
+    $responseData = json_decode($response, TRUE);
+
+    $GLOBALS["netforum_xweb_token"] = $responseData["token"];
+
+    if (count($responseData) == 0 || strlen($responseData["token"]) < 30){
+        $_SESSION["loginError"] = true;
+    }
+    else {
+        $_SESSION["loginError"] = false;
+    }
+    $_SESSION["WEBWebUserLogin"] = $responseData["result"]["IXmlSerializable"];
+
+}
+
+function xWebSetIndividualInformation($firstname, $lastname, $email, $password)
+{
+
+    xWebAuthenticate();
+
+    $postData = array(
+        'token' => $GLOBALS["netforum_xweb_token"],
+        'IndividualKey' => $_SESSION["WEBWebUserLogin"]["CurrentKey"],
+        oUpdateNode => array(
+            'datum' => array(
+                'ind_first_name' => $firstname,
+                'ind_last_name' => $lastname,
+                'eml_address' => $email,
+                'cst_web_password' => $password
+            )
+        )
+    );
+
+    $ch = curl_init($GLOBALS["netforum_xweb_url"] . "/SetIndividualInformation");
+    curl_setopt_array($ch, array(
+        CURLOPT_POST => TRUE,
+        CURLOPT_RETURNTRANSFER => TRUE,
+        CURLOPT_HTTPHEADER => array(
+            "Content-Type: application/json"
+        ),
+        CURLOPT_POSTFIELDS => json_encode($postData)
+    ));
+
+    $response = curl_exec($ch);
+    $responseData = json_decode($response, TRUE);
+
+    xWebCustomerLogin($email, $password);
+}
+
+?>
